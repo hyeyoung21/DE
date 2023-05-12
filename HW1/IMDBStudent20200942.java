@@ -24,18 +24,13 @@ public class IMDBStudent20200942
 			//ex 1::Toy Story (1995)::Animation|Children's|Comedy
 			
 			StringTokenizer itr = new StringTokenizer(value.toString(), "::");
+			String token = itr.nextToken();
 			
-			String[] arr = new String[4]; 
-			int idx = 0;
-			while (itr.hasMoreTokens()){
-			    arr[idx] = itr.nextToken(); // 배열에 한 토큰씩 담기
-			    idx++;
+			while (itr.hasMoreTokens()){ 
+				token = itr.nextToken(); 
 			}
 			
-			if (arr[arr.length-1] != null)
-				itr = new StringTokenizer(arr[arr.length-1], "|");
-			else
-				itr = new StringTokenizer(arr[arr.length-2], "|");
+			itr = new StringTokenizer(token, "|");
 			
 			while (itr.hasMoreTokens())
 			{
