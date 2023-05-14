@@ -69,7 +69,7 @@ public class UBERStudent20200942 {
 				tripsSum += Integer.parseInt(itr.nextToken().trim());
 			}
 			
-			result.set(vehiclesSum + "," + tripsSum);
+			result.set(tripsSum + "," + vehiclesSum);
 			context.write(key, result);
 		}
 	}
