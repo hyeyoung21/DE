@@ -44,7 +44,6 @@ public class UBERStudent20200942 {
 				name.set(baseNumber + "," + dayOfWeek);
 				value.set(activeVehicles + "," + trips);
 				
-				
 				context.write(name, value);
 		     	}
 		     	catch(Exception e) { 
@@ -60,6 +59,7 @@ public class UBERStudent20200942 {
 			//같은 차량 같은 요일끼리 묶기
 			int vehiclesSum = 0;
 			int tripsSum = 0;
+			
 			
 			for (Text val : value)
 			{
