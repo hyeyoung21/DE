@@ -21,29 +21,42 @@ public class UBERStudent20200942 {
 	
 		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 			//분류별로 나누기?
-			//ex B02512,1/1/2018,190,1132	
+			//ex B02512,1/1/2018,190,1132
+			String arr[] = {"SUN", "MON", "TUE", "WED", "THR", "FRI", "SAT"};
+			
 			StringTokenizer itr = new StringTokenizer(value.toString(), ",");
 			
 			String baseNumber = itr.nextToken().trim();
 			String date = itr.nextToken().trim();
 			String activeVehicles = itr.nextToken().trim();
 			String trips = itr.nextToken().trim();
-								
-			name.set(baseNumber + "," + date);
-			value.set(activeVehicles + "," + trips);
+				
+			try {
+				SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+				Date dateObj = dateFormat.parse(date);
 			
-			context.write(name, value);
+				Calendar cal = Calendar.getInstance() ;
+				cal.setTime(dateObj);
+				
+				int day = cal.get(Calendar.DAY_OF_WEEK) ;
+				String dayOfWeek = arr[day-1];
+								
+				name.set(baseNumber + "," + dayOfWeek);
+				value.set(activeVehicles + "," + trips);
+				
+				context.write(name, value);
+		     	}
+		     	catch(Exception e) { 
+		     		
+		     	}
 		}
 	}
 	
 	public static class Reduce extends Reducer<Text, Text, Text, Text> {
-		private Text result = new Text();
-		private Text reduceKey = new Text();
+	private Text result = new Text();
 	
 		public void reduce(Text key, Iterable<Text> value, Context context) throws IOException, InterruptedException {
-			//같은 차량 같은 날짜끼리 묶기
-			String arr[] = {"MON", "TUE", "WED", "THR", "FRI", "SAT", "SUN"};
-		
+			//같은 차량 같은 요일끼리 묶기
 			int vehiclesSum = 0;
 			int tripsSum = 0;
 			
@@ -56,30 +69,8 @@ public class UBERStudent20200942 {
 				tripsSum += Integer.parseInt(itr.nextToken().trim());
 			}
 			
-			StringTokenizer itr = new StringTokenizer(key.toString(), ",");
-			String baseNumber = itr.nextToken().trim();
-			String date = itr.nextToken().trim();
-			
-			try {
-				SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-				Date dateObj = dateFormat.parse(date);
-			
-				Calendar cal = Calendar.getInstance() ;
-				cal.setTime(dateObj);
-				
-				int day = cal.get(Calendar.DAY_OF_WEEK) ;
-				String dayOfWeek = arr[day];
-				
-				System.out.println(baseNumber + "," + date + "..." + tripsSum + "," + vehiclesSum);
-				
-				reduceKey.set(baseNumber + "," + dayOfWeek);
-				result.set(tripsSum + "," + vehiclesSum);
-				context.write(reduceKey, result);
-				
-			}catch(Exception e) { 
-	     		
-	     		}
-		
+			result.set(tripsSum + "," + vehiclesSum);
+			context.write(key, result);
 		}
 	}
 	
