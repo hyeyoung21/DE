@@ -32,7 +32,7 @@ public class UBERStudent20200942 {
 			String trips = itr.nextToken().trim();
 				
 			try {
-				SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+				SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
 				Date dateObj = dateFormat.parse(date);
 			
 				Calendar cal = Calendar.getInstance() ;
