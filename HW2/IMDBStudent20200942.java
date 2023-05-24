@@ -11,6 +11,8 @@ import org.apache.hadoop.mapreduce.lib.output.*;
 import org.apache.hadoop.util.GenericOptionsParser;
 public class IMDBStudent20200942
 {
+	public static int k;
+	
 	public static class ReduceSideJoinMapper extends Mapper<Object, Text, Text, Text>
 	{
 		boolean fileMovie = true;
@@ -23,11 +25,23 @@ public class IMDBStudent20200942
 			String joinValue;
 			String movieID;
 			
-			
 			if(fileMovie) {
 				movieID = itr.nextToken();
 				String movieTitle = itr.nextToken();
-				joinValue = "M," + movieTitle;
+				
+				StringTokenizer genre = new StringTokenizer(itr.nextToken().toString(), "|");
+				int flag = 0;
+				while (genre.hasMoreTokens()){ 
+					if(genre.nextToken().equals("Fantasy")) {
+						flag = 1;
+						break;
+					}
+				}
+				
+				if (flag == 0 )
+					joinValue = "N";
+				else
+					joinValue = "M=" + movieTitle;
 			}
 			
 			else  
@@ -35,10 +49,8 @@ public class IMDBStudent20200942
 				String userID = itr.nextToken();
 				movieID = itr.nextToken();
 				String movieRating = itr.nextToken();
-				joinValue = "R," + movieRating;
+				joinValue = "R=" + movieRating;
 			}
-			
-			System.out.println(movieID + " : " + joinValue);
 			
 			outputKey.set(movieID);
 			outputValue.set(joinValue);
@@ -59,26 +71,64 @@ public class IMDBStudent20200942
 		InterruptedException  {
 			Text reduce_key = new Text();
 			Text reduce_result = new Text();
+			ArrayList<Integer> buffer = new ArrayList<Integer>();
 			String title = "";
-			String rate = "";
+			float rate = 0;
+			int min = 5;
+			int minIndex = 0;
 			
 			for (Text val : values) {
 				String file_type;
-				StringTokenizer itr = new StringTokenizer(val.toString(), ",");
+				StringTokenizer itr = new StringTokenizer(val.toString(), "=");
 				file_type = itr.nextToken();
+				if( file_type.equals( "N" ) )  return;
 				
 				if( file_type.equals( "M" ) )  {
 					title = itr.nextToken();
 				}
-				else  {
-					rate = itr.nextToken();
+				else  { //topK 구하기
+					int num = Integer.parseInt( itr.nextToken() );
+					if(buffer.size() < k) {
+						buffer.add(num);
+						if (min > num) {
+							min = num;
+							minIndex = buffer.size() - 1;
+						}
+					}
+					else
+					{
+						if(num > min) {
+							buffer.set(minIndex, num);
+							
+							min = num;
+							for(int i=0; i<buffer.size(); i++) {
+								if(buffer.get(i) < num)
+								{
+									min = buffer.get(i);
+									minIndex = i;
+								}
+							}
+						}
+					}
+					
+					
+					System.out.print("[");
+					for(int i=0; i<buffer.size(); i++)
+						System.out.print(buffer.get(i)+",");
+					System.out.print("] num: " + num + "min: " + min + "\n");
+					
+					
 				}
-				
-				System.out.println(val);
 			}
 			
+			int sum = 0;
+			for(int v : buffer) {
+				sum += v;
+			}		
+			rate = (float) sum / buffer.size();
+						
 			reduce_key.set(title);
-			reduce_result.set(rate);
+			reduce_result.set(rate + "");
 			context.write(reduce_key, reduce_result);
 			
 			
@@ -104,8 +154,8 @@ public class IMDBStudent20200942
 		job.setOutputValueClass(Text.class);
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
 		FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
-		int topK = Integer.parseInt(otherArgs[2]);
-		conf.setInt("topK", topK);
+		k = Integer.parseInt(otherArgs[2]);
+		conf.setInt("topK", k);
 		FileSystem.get(job.getConfiguration()).delete( new Path(otherArgs[1]), true);
 		System.exit(job.waitForCompletion(true) ? 0 : 1);
 	}
