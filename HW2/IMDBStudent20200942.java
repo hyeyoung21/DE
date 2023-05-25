@@ -119,16 +119,18 @@ public class IMDBStudent20200942
 			int sum = 0;
 			int size = queue.size();
 			
-			//System.out.print(" ::::::::::::::: [");
+			
+			//System.out.print("  size: " + size  +" ::::::::::::::: [");
 			while( queue.size() != 0 ) {
 				int n = queue.remove();
 				sum+=n;
 				//System.out.print(n + ",");
 			}
 			//System.out.print("] \n");
+			
 			if (flag ==  1) return;
 			
-			rate = sum/size;
+			rate = (float)sum/size;
 			
 			reduce_key.set(title);
 			reduce_result.set(rate + "");
