@@ -13,15 +13,6 @@ import org.apache.hadoop.mapreduce.lib.output.*;
 import org.apache.hadoop.util.GenericOptionsParser;
 public class IMDBStudent20200942
 {
-	public static class RateComparator implements Comparator<Integer> {
-		public int compare(Integer o1, Integer o2) {
-			if ( o1 > o2 ) return 1;
-			if ( o1 < o2 ) return -1;
-			return 0;
-		}
-	}
-
-
 	public static class ReduceSideJoinMapper extends Mapper<Object, Text, Text, Text>
 	{
 		boolean fileMovie = true;
@@ -75,8 +66,7 @@ public class IMDBStudent20200942
 	
 	public static class ReduceSideJoinReducer extends Reducer<Text,Text,Text,Text>
 	{	
-		private PriorityQueue<Integer> queue ;
-		private Comparator<Integer> comp = new RateComparator();
+		private PriorityQueue<Integer> queue;
 		private int topK;
 		Text reduce_key = new Text();
 		Text reduce_result = new Text();
@@ -109,6 +99,7 @@ public class IMDBStudent20200942
 						queue.add( num );
 						if( queue.size() > topK ) queue.remove();
 					}
+					//System.out.print(queue + " " + num + "\n");
 				}
 			}
 			
@@ -116,9 +107,7 @@ public class IMDBStudent20200942
 			int size = queue.size();
 			
 			if (flag ==  1) {
-				while( queue.size() != 0 ) {
-					int n = queue.remove();
-				}
+				queue.clear();
 				return;
 			}
 			else {
@@ -140,7 +129,7 @@ public class IMDBStudent20200942
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration conf = context.getConfiguration();
 			topK = conf.getInt("topK", -1);
-			queue = new PriorityQueue<Integer>(topK , comp);
+			queue = new PriorityQueue<Integer>();
 		}
 	}
 	
