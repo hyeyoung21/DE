@@ -37,8 +37,12 @@ public class IMDBStudent20200942
 			if(fileMovie) {
 				movieID = itr.nextToken();
 				String movieTitle = itr.nextToken();
+				String token ="";
+				while (itr.hasMoreTokens()){ 
+					token = itr.nextToken();
+				}
 				
-				StringTokenizer genre = new StringTokenizer(itr.nextToken().toString(), "|");
+				StringTokenizer genre = new StringTokenizer(token, "|");
 				int flag = 0;
 				while (genre.hasMoreTokens()){ 
 					if(genre.nextToken().equals("Fantasy")) {
@@ -92,7 +96,6 @@ public class IMDBStudent20200942
 				StringTokenizer itr = new StringTokenizer(val.toString(), "=");
 				file_type = itr.nextToken();
 				if( file_type.equals( "N" ) ) { 
-					//System.out.print("N"); 
 					flag = 1; break; 
 				}
 				
@@ -110,25 +113,26 @@ public class IMDBStudent20200942
 					if ( queue.size() < topK || head < num ) {
 						queue.add( num );
 						if( queue.size() > topK ) queue.remove();
-						//System.out.print(" " + num );
 					}
 				}
 			}
 			
-			
 			int sum = 0;
 			int size = queue.size();
 			
-			
-			//System.out.print("  size: " + size  +" ::::::::::::::: [");
-			while( queue.size() != 0 ) {
-				int n = queue.remove();
-				sum+=n;
-				//System.out.print(n + ",");
+			if (flag ==  1) {
+				while( queue.size() != 0 ) {
+					int n = queue.remove();
+				}
+				return;
 			}
-			//System.out.print("] \n");
-			
-			if (flag ==  1) return;
+			else {
+				//System.out.print(queue); System.out.print(title + "\n");
+				while( queue.size() != 0 ) {
+					int n = queue.remove();
+					sum+=n;
+				}
+			}
 			
 			rate = (float)sum/size;
 			
