@@ -13,6 +13,39 @@ import org.apache.hadoop.mapreduce.lib.output.*;
 import org.apache.hadoop.util.GenericOptionsParser;
 public class IMDBStudent20200942
 {
+	public static class Movie {
+		float rate;
+		String title;
+		
+		Movie(float rate, String title) {
+			this.rate = rate;
+			this.title = title;
+		}
+		
+		public String toString()
+		{
+			return title + ": " + rate;
+		}
+	}
+	
+	public static class MovieComparator implements Comparator<Movie> {
+		public int compare(Movie x, Movie y) {
+			if ( x.rate > y.rate ) return 1;
+			if ( x.rate < y.rate ) return -1;
+			return 0;
+		}
+	}
+	
+	public static void insertRate(PriorityQueue queue, int topK, float rate, String title) {
+		Movie head = (Movie) queue.peek();
+			
+		if ( queue.size() < topK || head.rate < rate ) {
+			Movie movie = new Movie(rate, title);
+			queue.add( movie );
+			if( queue.size() > topK ) queue.remove();
+		}
+	}
+	
 	public static class ReduceSideJoinMapper extends Mapper<Object, Text, Text, Text>
 	{
 		boolean fileMovie = true;
@@ -66,13 +99,16 @@ public class IMDBStudent20200942
 	
 	public static class ReduceSideJoinReducer extends Reducer<Text,Text,Text,Text>
 	{	
-		private PriorityQueue<Integer> queue;
+		private PriorityQueue<Movie> queue ;
+		private Comparator<Movie> comp = new MovieComparator();
 		private int topK;
 		Text reduce_key = new Text();
 		Text reduce_result = new Text();
+
 			
 		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException  {
-			int flag = 0;
+			int sum = 0; //rating 총합
+			int size = 0; //rating 갯수
 			String title = "";
 			float rate = 0;
 			
@@ -80,57 +116,38 @@ public class IMDBStudent20200942
 				String file_type;
 				StringTokenizer itr = new StringTokenizer(val.toString(), "=");
 				file_type = itr.nextToken();
-				if( file_type.equals( "N" ) ) { 
-					flag = 1; break; 
-				}
+				if( file_type.equals( "N" ) ) return; 
 				
 				if( file_type.equals( "M" ) )  {
 					title = itr.nextToken();
 				}
-				else  { //topK 구하기
+				else  { 
 					int num = Integer.parseInt( itr.nextToken() );
-					int head;
-					if(queue.size() != 0)
-						head = (int) queue.peek();
-					else
-						head = 0;
-						
-					if ( queue.size() < topK || head < num ) {
-						queue.add( num );
-						if( queue.size() > topK ) queue.remove();
-					}
-					//System.out.print(queue + " " + num + "\n");
+					sum += num;
+					size++;
 				}
 			}
-			
-			int sum = 0;
-			int size = queue.size();
-			
-			if (flag ==  1) {
-				queue.clear();
-				return;
-			}
-			else {
-				//System.out.print(queue); System.out.print(title + "\n");
-				while( queue.size() != 0 ) {
-					int n = queue.remove();
-					sum+=n;
-				}
-			}
-			
 			rate = (float)sum/size;
 			
-			reduce_key.set(title);
-			reduce_result.set(rate + "");
-			context.write(reduce_key, reduce_result);
-				
+			insertRate(queue, topK, rate, title);
 		}
 		
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration conf = context.getConfiguration();
 			topK = conf.getInt("topK", -1);
-			queue = new PriorityQueue<Integer>();
+			queue = new PriorityQueue<Movie>(topK, comp);
 		}
+		protected void cleanup(Context context) throws IOException, InterruptedException {
+			while( !queue.isEmpty()) {
+				Movie movie = (Movie) queue.remove();
+				
+				reduce_key.set(movie.title);
+				reduce_result.set(movie.rate + "");
+				context.write(reduce_key, reduce_result);
+			}
+		}
+		
+
 	}
 	
 	public static void main(String[] args) throws Exception
