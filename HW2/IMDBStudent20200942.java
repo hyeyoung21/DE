@@ -14,10 +14,10 @@ import org.apache.hadoop.util.GenericOptionsParser;
 public class IMDBStudent20200942
 {
 	public static class Movie {
-		float rate;
+		double rate;
 		String title;
 		
-		Movie(float rate, String title) {
+		Movie(double rate, String title) {
 			this.rate = rate;
 			this.title = title;
 		}
@@ -36,7 +36,7 @@ public class IMDBStudent20200942
 		}
 	}
 	
-	public static void insertRate(PriorityQueue queue, int topK, float rate, String title) {
+	public static void insertRate(PriorityQueue queue, int topK, double rate, String title) {
 		Movie head = (Movie) queue.peek();
 			
 		if ( queue.size() < topK || head.rate < rate ) {
@@ -97,20 +97,20 @@ public class IMDBStudent20200942
 		}
 	}
 	
-	public static class ReduceSideJoinReducer extends Reducer<Text,Text,Text,Text>
+	public static class ReduceSideJoinReducer extends Reducer<Text,Text,Text,DoubleWritable>
 	{	
 		private PriorityQueue<Movie> queue ;
 		private Comparator<Movie> comp = new MovieComparator();
 		private int topK;
 		Text reduce_key = new Text();
-		Text reduce_result = new Text();
+		DoubleWritable reduce_result = new DoubleWritable();
 
 			
 		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException  {
 			int sum = 0; //rating 총합
 			int size = 0; //rating 갯수
 			String title = "";
-			float rate = 0;
+			double rate = 0;
 			ArrayList<Integer> buffer = new ArrayList<Integer>();
 			
 			
@@ -130,7 +130,7 @@ public class IMDBStudent20200942
 					//buffer.add(num);
 				}
 			}
-			rate = (float)sum/size;
+			rate = (double)sum/size;
 			
 			//System.out.println(buffer + "  " +title + ": " + rate );
 			insertRate(queue, topK, rate, title);
@@ -146,9 +146,8 @@ public class IMDBStudent20200942
 			while( !queue.isEmpty()) {
 				Movie movie = (Movie) queue.remove();
 				
-				String rateString = String.format("%.1f", movie.rate);
 				reduce_key.set(movie.title);
-				reduce_result.set(rateString);
+				reduce_result.set(movie.rate);
 				context.write(reduce_key, reduce_result);
 			}
 		}
