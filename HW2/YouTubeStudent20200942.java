@@ -78,15 +78,17 @@ public class YouTubeStudent20200942
 			int size = 0; //rating 갯수
 			String title = key.toString();
 			double rate = 0;
+			ArrayList<Double> buffer = new ArrayList<Double>();
 			
 			for (DoubleWritable val : values) {
 				double num = val.get();
 				sum += num;
 				size++;
+				buffer.add(num);
 			}
 			rate = (double)sum/size;
 			
-			//System.out.println(title + ": " + rate );
+			//System.out.println("rate = " + rate + " size= " + size + " title= " + title);
 			insertRate(queue, topK, rate, title);
 		}
 		
@@ -96,7 +98,7 @@ public class YouTubeStudent20200942
 			queue = new PriorityQueue<YouTube>(topK, comp);
 		}
 		protected void cleanup(Context context) throws IOException, InterruptedException {
-			//System.out.println(queue);
+			System.out.println(queue);
 			while( !queue.isEmpty()) {
 				YouTube yt = (YouTube) queue.remove();
 				
