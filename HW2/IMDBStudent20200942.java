@@ -146,7 +146,7 @@ public class IMDBStudent20200942
 			while( !queue.isEmpty()) {
 				Movie movie = (Movie) queue.remove();
 				
-				String rateString = String.format("%.f", movie.rate);
+				String rateString = String.format("%.1f", movie.rate);
 				reduce_key.set(movie.title);
 				reduce_result.set(rateString);
 				context.write(reduce_key, reduce_result);
