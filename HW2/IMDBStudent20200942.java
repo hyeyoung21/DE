@@ -111,6 +111,8 @@ public class IMDBStudent20200942
 			int size = 0; //rating 갯수
 			String title = "";
 			float rate = 0;
+			ArrayList<Integer> buffer = new ArrayList<Integer>();
+			
 			
 			for (Text val : values) {
 				String file_type;
@@ -125,10 +127,12 @@ public class IMDBStudent20200942
 					int num = Integer.parseInt( itr.nextToken() );
 					sum += num;
 					size++;
+					//buffer.add(num);
 				}
 			}
 			rate = (float)sum/size;
 			
+			//System.out.println(buffer + "  " +title + ": " + rate );
 			insertRate(queue, topK, rate, title);
 		}
 		
@@ -138,11 +142,13 @@ public class IMDBStudent20200942
 			queue = new PriorityQueue<Movie>(topK, comp);
 		}
 		protected void cleanup(Context context) throws IOException, InterruptedException {
+			System.out.println(queue);
 			while( !queue.isEmpty()) {
 				Movie movie = (Movie) queue.remove();
 				
+				String rateString = String.format("%.f", movie.rate);
 				reduce_key.set(movie.title);
-				reduce_result.set(movie.rate + "");
+				reduce_result.set(rateString);
 				context.write(reduce_key, reduce_result);
 			}
 		}
