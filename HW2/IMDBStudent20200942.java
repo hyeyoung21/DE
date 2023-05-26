@@ -142,7 +142,7 @@ public class IMDBStudent20200942
 			queue = new PriorityQueue<Movie>(topK, comp);
 		}
 		protected void cleanup(Context context) throws IOException, InterruptedException {
-			System.out.println(queue);
+			//System.out.println(queue);
 			while( !queue.isEmpty()) {
 				Movie movie = (Movie) queue.remove();
 				

@@ -86,7 +86,7 @@ public class YouTubeStudent20200942
 			}
 			rate = (double)sum/size;
 			
-			System.out.println(title + ": " + rate );
+			//System.out.println(title + ": " + rate );
 			insertRate(queue, topK, rate, title);
 		}
 		
@@ -96,7 +96,7 @@ public class YouTubeStudent20200942
 			queue = new PriorityQueue<YouTube>(topK, comp);
 		}
 		protected void cleanup(Context context) throws IOException, InterruptedException {
-			System.out.println(queue);
+			//System.out.println(queue);
 			while( !queue.isEmpty()) {
 				YouTube yt = (YouTube) queue.remove();
 				
