@@ -1,106 +1,136 @@
+//hadoop jar build/hadoop-project.jar YouTubeStudent20200942 HW2_input output 10
+
 import java.io.IOException;
 import java.util.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.*;
-
-
-
 import org.apache.hadoop.conf.*;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapred.lib.*;
 import org.apache.hadoop.mapreduce.lib.input.*;
 import org.apache.hadoop.mapreduce.lib.output.*;
 import org.apache.hadoop.util.GenericOptionsParser;
-
-public class UBERStudent20200942 {
-
-	public static class Map extends Mapper<Object, Text, Text, Text> {
-		private Text name = new Text();
-		private Text value = new Text();
-	
-		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-			//분류별로 나누기?
-			//ex B02512,1/1/2018,190,1132
-			String arr[] = {"MON", "TUE", "WED", "THR", "FRI", "SAT", "SUN"};
-			
-			StringTokenizer itr = new StringTokenizer(value.toString(), ",");
-			
-			String baseNumber = itr.nextToken().trim();
-			String date = itr.nextToken().trim();
-			String activeVehicles = itr.nextToken().trim();
-			String trips = itr.nextToken().trim();
-			
-			
-			itr = new StringTokenizer(date, "/");
-			int month = Integer.parseInt(itr.nextToken().trim());
-			int day = Integer.parseInt(itr.nextToken().trim());
-			int year = Integer.parseInt(itr.nextToken().trim());
-			
-			LocalDate localDate = LocalDate.of(year, month, day);
-			DayOfWeek dayOfWeekInt =  localDate.getDayOfWeek();
-			String dayOfWeek = arr[dayOfWeekInt.getValue() - 1];
-
-				
-			System.out.println(localDate + " : " + dayOfWeekInt);
-							
-			name.set(baseNumber + "," + dayOfWeek);
-			value.set(activeVehicles + "," + trips);
-			
-			context.write(name, value);
+public class YouTubeStudent20200942
+{
+	public static class YouTube {
+		double rate;
+		String title;
+		
+		YouTube(double rate, String title) {
+			this.rate = rate;
+			this.title = title;
+		}
+		
+		public String toString()
+		{
+			return title + ": " + rate;
 		}
 	}
 	
-	public static class Reduce extends Reducer<Text, Text, Text, Text> {
-	private Text result = new Text();
+	public static class YouTubeComparator implements Comparator<YouTube> {
+		public int compare(YouTube x, YouTube y) {
+			if ( x.rate > y.rate ) return 1;
+			if ( x.rate < y.rate ) return -1;
+			return 0;
+		}
+	}
 	
-		public void reduce(Text key, Iterable<Text> value, Context context) throws IOException, InterruptedException {
-			//같은 차량 같은 요일끼리 묶기
-			int vehiclesSum = 0;
-			int tripsSum = 0;
+	public static void insertRate(PriorityQueue queue, int topK, double rate, String title) {
+		YouTube head = (YouTube) queue.peek();
 			
+		if ( queue.size() < topK || head.rate < rate ) {
+			YouTube yt = new YouTube(rate, title);
+			queue.add( yt );
+			if( queue.size() > topK ) queue.remove();
+		}
+	}
+	
+	public static class ReduceSideJoinMapper extends Mapper<Object, Text, Text, DoubleWritable>
+	{
+		public void map(Object key, Text value, Context context) throws IOException, InterruptedException
+		{
+		
+			Text outputKey = new Text();
+			DoubleWritable outputValue = new DoubleWritable();
+			String[] itr = value.toString().split("\\|");
+
+			String genre = itr[3];
+			double rate = Double.parseDouble(itr[6]);
 			
-			for (Text val : value)
-			{
-				StringTokenizer itr = new StringTokenizer(val.toString(), ",");
-				
-				vehiclesSum += Integer.parseInt(itr.nextToken().trim());
-				tripsSum += Integer.parseInt(itr.nextToken().trim());
+			outputKey.set(genre);
+			outputValue.set(rate);
+			context.write(outputKey, outputValue);
+		}
+	}
+	
+	public static class ReduceSideJoinReducer extends Reducer<Text,DoubleWritable,Text,DoubleWritable>
+	{	
+		private PriorityQueue<YouTube> queue ;
+		private Comparator<YouTube> comp = new YouTubeComparator();
+		private int topK;
+		Text reduce_key = new Text();
+		DoubleWritable reduce_result = new DoubleWritable();
+
+			
+		public void reduce(Text key, Iterable<DoubleWritable> values, Context context) throws IOException, InterruptedException  {
+			int sum = 0; //rating 총합
+			int size = 0; //rating 갯수
+			String title = key.toString();
+			double rate = 0;
+			
+			for (DoubleWritable val : values) {
+				double num = val.get();
+				sum += num;
+				size++;
 			}
+			rate = (double)sum/size;
 			
-			result.set(tripsSum + "," + vehiclesSum);
-			context.write(key, result);
+			System.out.println(title + ": " + rate );
+			insertRate(queue, topK, rate, title);
 		}
+		
+		protected void setup(Context context) throws IOException, InterruptedException {
+			Configuration conf = context.getConfiguration();
+			topK = conf.getInt("topK", -1);
+			queue = new PriorityQueue<YouTube>(topK, comp);
+		}
+		protected void cleanup(Context context) throws IOException, InterruptedException {
+			System.out.println(queue);
+			while( !queue.isEmpty()) {
+				YouTube yt = (YouTube) queue.remove();
+				
+				reduce_key.set(yt.title);
+				reduce_result.set(yt.rate);
+				context.write(reduce_key, reduce_result);
+			}
+		}
+		
+
 	}
 	
-
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception
+	{
 		Configuration conf = new Configuration();
 		String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-		if (otherArgs.length != 2)
+
+		if (otherArgs.length != 3)
 		{
-			System.err.println("Usage: IMDB <in> <out>");
+			System.err.println("Usage: IMDBStudent20200942 <in> <out>");
 			System.exit(2);
 		}
-		    	
-		Job job = new Job(conf, "UBERStudent20200942");
-		job.setJarByClass(UBERStudent20200942.class);
-		job.setMapperClass(Map.class);
-		job.setReducerClass(Reduce.class);
-
-
+		int topK = Integer.parseInt( otherArgs[2] );
+		conf.setInt("topK", topK);
+		
+		Job job = new Job(conf, "YouTubeStudent20200942");
+		job.setJarByClass(YouTubeStudent20200942.class);
+		job.setMapperClass(ReduceSideJoinMapper.class);
+		job.setReducerClass(ReduceSideJoinReducer.class);
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(Text.class);
-
-		job.setInputFormatClass(TextInputFormat.class);
-		job.setOutputFormatClass(TextOutputFormat.class);
-
-		FileInputFormat.addInputPath(job, new Path(args[0]));
-		FileOutputFormat.setOutputPath(job, new Path(args[1]));
-		FileSystem.get(job.getConfiguration()).delete( new Path(args[1]), true);
-		job.waitForCompletion(true);
+		job.setOutputValueClass(DoubleWritable.class);
+		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
+		FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
+		FileSystem.get(job.getConfiguration()).delete( new Path(otherArgs[1]), true);
+		System.exit(job.waitForCompletion(true) ? 0 : 1);
 	}
 }
-
