@@ -74,7 +74,7 @@ public class YouTubeStudent20200942
 
 			
 		public void reduce(Text key, Iterable<DoubleWritable> values, Context context) throws IOException, InterruptedException  {
-			int sum = 0; //rating 총합
+			double sum = 0; //rating 총합
 			int size = 0; //rating 갯수
 			String title = key.toString();
 			double rate = 0;
@@ -88,7 +88,7 @@ public class YouTubeStudent20200942
 			}
 			rate = (double)sum/size;
 			
-			//System.out.println("rate = " + rate + " size= " + size + " title= " + title);
+			//System.out.println("rate = " + rate + " sum= " + sum + " size= " + size + " title= " + title);
 			insertRate(queue, topK, rate, title);
 		}
 		
