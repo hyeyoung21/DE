@@ -132,7 +132,7 @@ public class IMDBStudent20200942
 			}
 			rate = (double)sum/size;
 			
-			System.out.println(title + ": " + rate + "sum/size: " +sum + "/" size );
+			//System.out.println(title + ": " + rate + "sum/size: " +sum + "/" size );
 			insertRate(queue, topK, rate, title);
 		}
 		
