@@ -39,7 +39,7 @@ public final class UBERStudent20200942 {
 			String date = itr.nextToken().trim();
 			String activeVehicles = itr.nextToken().trim();
 			String trips = itr.nextToken().trim();
-				
+			
 			try {
 				SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
 				Date dateObj = dateFormat.parse(date);
@@ -51,11 +51,11 @@ public final class UBERStudent20200942 {
 				String dayOfWeek = arr[day-1];
 								
 				name = baseNumber + "," + dayOfWeek;
-				value = activeVehicles + "," + trips;
+				value = trips + "," +activeVehicles ;
 				
 		     	}
 		     	catch(Exception e) { 
-		     		System.err.println("Exception");
+		     		System.err.println("Data Exception");
 		     	}
 			
 			return new Tuple2(name, value);
@@ -65,13 +65,17 @@ public final class UBERStudent20200942 {
 
         Function2<String, String, String> f2 = new Function2<String, String, String>() {
             public String call(String x, String y) {	
-		StringTokenizer xToken = new StringTokenizer(y, ",");
-		StringTokenizer yToken = new StringTokenizer(x, ",");
+		StringTokenizer xToken = new StringTokenizer(x, ",");
+		StringTokenizer yToken = new StringTokenizer(y, ",");
 		
-		int vehiclesSum = Integer.parseInt(xToken.nextToken().trim()) + Integer.parseInt(yToken.nextToken().trim());
 		int tripsSum = Integer.parseInt(xToken.nextToken().trim()) + Integer.parseInt(yToken.nextToken().trim());
+		int vehiclesSum = Integer.parseInt(xToken.nextToken().trim()) + Integer.parseInt(yToken.nextToken().trim());
+		
 		
 		String result = tripsSum + "," + vehiclesSum;
+		
+		
+		System.err.println(x + "+" + y + "=" + result);
 		return result;
             }
         };
