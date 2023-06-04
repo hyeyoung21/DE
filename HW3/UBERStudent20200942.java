@@ -75,7 +75,7 @@ public final class UBERStudent20200942 {
 		String result = tripsSum + "," + vehiclesSum;
 		
 		
-		System.err.println(x + "+" + y + "=" + result);
+		//System.err.println(x + "+" + y + "=" + result);
 		return result;
             }
         };
